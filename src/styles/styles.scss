@@ -1,0 +1,35 @@
+@import "~bulma";
+// @import "~font-awesome/scss/font-awesome";
+
+html, body, #app {
+  height: 100%;
+}
+.keys {
+  display: flex;
+  height: 100%;
+  .key {
+    flex: 1;
+    box-sizing: border-box;
+    border: none;
+    border-right: 1px solid #DDD;
+    border-bottom: 1px solid #DDD;
+    height: 95%;
+    background-color: transparent;
+    &:focus {
+      outline: none;
+    }
+    &.black {
+      margin-top: -100px;
+      background-color: #333;
+      color: #FFF;
+    }
+  }
+}
+
+@media (max-width: 768px) {
+  .keys {
+    .key:nth-child(13),.key:nth-child(14),.key:nth-child(15),.key:nth-child(16),.key:nth-child(17),.key:nth-child(18){
+      display: none;
+    }
+  }
+}
