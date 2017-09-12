@@ -133,6 +133,7 @@ void setup(void)
   // add an custom service with a writable characteristic
   Serial.println( F("Adding Service 0x1234 with characterisitc 0x2345") );
   ble.sendCommandCheckOK( F("AT+GATTADDSERVICE=uuid=0x1234") );
+  ble.sendCommandCheckOK( F("AT+GAPDEVNAME=Blue-Pi") );
   ble.sendCommandWithIntReply( F("AT+GATTADDCHAR=UUID=0x2345,PROPERTIES=0x08,MIN_LEN=1,MAX_LEN=6,DATATYPE=string,DESCRIPTION=string,VALUE=abc"), &charid_string);
 
   ble.reset();
