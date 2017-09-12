@@ -6,16 +6,8 @@
 *               and plays them on the arduino with the buzzer
 *********************************************************************
 *
-*   THIS SCRIPT IS SOLVING ALL FOUR PARTS OF THE ASSIGNMENT
+* To be continiued...
 * 
-* Including:
-* - Evaluating responses of a multiple choice exam by a 
-*   given master solutions file.
-* - Finding inexact matching of questions and answers
-* - Analyzing cohort performance and identifying below-expectation results
-* - Identifying possible academic misconduct
-*
-* Syntax: evaluate_responses [master_file] [response_file ...]
 *********************************************************************/
 
 #include <Arduino.h>
@@ -67,9 +59,13 @@
 /* Hardware SPI, using SCK/MOSI/MISO hardware SPI pins and then user selected CS/IRQ/RST */
 Adafruit_BluefruitLE_SPI ble(BLUEFRUIT_SPI_CS, BLUEFRUIT_SPI_IRQ, BLUEFRUIT_SPI_RST);
 
+/* defining output pin for buzzer */
 const int buzzerPin = 9;
-int tempo = 250;
 
+/* How long a tone should sound */
+int tone_duration = 250;
+
+/* recive frequenci in this var */
 int32_t charid_string;
 
 // A small helper
@@ -86,19 +82,20 @@ void disconnected(void) {
   Serial.println( F("Disconnected") );
 }
 
+
 void BleGattRX(int32_t chars_id, uint8_t data[], uint16_t len) {
 
   Serial.print("Playing Tone: ");
   Serial.println(atoi((char*)data));
 
-  tone(buzzerPin, atoi((char*)data), tempo);
+  tone(buzzerPin, atoi((char*)data), tone_duration);
   
 }
 
 /**************************************************************************/
 /*!
-    @brief  Sets up the HW an the BLE module (this function is called
-            automatically on startup)
+    @brief  Sets up the HW an the BLE module 
+        (this function is called automatically on startup)
 */
 /**************************************************************************/
 void setup(void)
@@ -136,6 +133,7 @@ void setup(void)
   // add an custom service with a writable characteristic
   Serial.println( F("Adding Service 0x1234 with characterisitc 0x2345") );
   ble.sendCommandCheckOK( F("AT+GATTADDSERVICE=uuid=0x1234") );
+  ble.sendCommandCheckOK( F("AT+GAPDEVNAME=Blue-Pi") );
   ble.sendCommandWithIntReply( F("AT+GATTADDCHAR=UUID=0x2345,PROPERTIES=0x08,MIN_LEN=1,MAX_LEN=6,DATATYPE=string,DESCRIPTION=string,VALUE=abc"), &charid_string);
 
   ble.reset();
@@ -154,7 +152,8 @@ void setup(void)
   /* Only one BLE GATT function should be set, it is possible to set it 
   multiple times for multiple Chars ID  */
   ble.setBleGattRxCallback(charid_string, BleGattRX);
-  
+
+  /* set buzzer pin */
   pinMode(buzzerPin, OUTPUT);
 }
 
