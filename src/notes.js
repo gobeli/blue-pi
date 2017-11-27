@@ -1,0 +1,91 @@
+export default [{
+  keyCode: 65,
+  key: 'a',
+  note: 'C4',
+  frequency: 262,
+}, {
+  keyCode: 87,
+  key: 'w',
+  note: 'CS4',
+  frequency: 277,
+}, {
+  keyCode: 83,
+  key: 's',
+  note: 'D4',
+  frequency: 294,
+}, {
+  keyCode: 69,
+  key: 'e',
+  note: 'DS4',
+  frequency: 311,
+}, {
+  keyCode: 68,
+  key: 'd',
+  note: 'E4',
+  frequency: 330,
+}, {
+  keyCode: 70,
+  key: 'f',
+  note: 'F4',
+  frequency: 349,
+}, {
+  keyCode: 84,
+  key: 't',
+  note: 'FS4',
+  frequency: 370,
+}, {
+  keyCode: 71,
+  key: 'g',
+  note: 'G4',
+  frequency: 392,
+}, {
+  keyCode: 90,
+  key: 'z',
+  note: 'GS4',
+  frequency: 415,
+}, {
+  keyCode: 72,
+  key: 'h',
+  note: 'A4',
+  frequency: 440,
+}, {
+  keyCode: 85,
+  key: 'u',
+  note: 'AS4',
+  frequency: 466,
+}, {
+  keyCode: 74,
+  key: 'j',
+  note: 'B4',
+  frequency: 494,
+}, {
+  keyCode: 75,
+  key: 'k',
+  note: 'C5',
+  frequency: 523,
+}, {
+  keyCode: 79,
+  key: 'o',
+  note: 'CS5',
+  frequency: 554,
+}, {
+  keyCode: 76,
+  key: 'l',
+  note: 'D5',
+  frequency: 587,
+}, {
+  keyCode: 80,
+  key: 'p',
+  note: 'DS5',
+  frequency: 622,
+}, {
+  keyCode: 186,
+  key: 'ö',
+  note: 'E5',
+  frequency: 659,
+}, {
+  keyCode: 222,
+  key: 'ä',
+  note: 'F5',
+  frequency: 698,
+}];

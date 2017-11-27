@@ -4,15 +4,25 @@
       <span style="margin-right: 0.5rem">Connect</span>
       <i class="fa fa-bluetooth-b"></i>
     </button>
-    <div class="keys" v-if="characteristic">
-      <button class="key" v-for="(note, index) in notes" :key="note" :class="{ black: note.includes('S'), white: !note.includes('S') }"  @click="play(note)">
-        {{note}} ({{keys[index]}})
-      </button>
+
+    <div id="regularKeyboard" v-if="characteristic">
+      <template v-for="(note, index) in notes">
+        <div class="key" :key="note.note" v-if="!note.note.includes('S')">
+          {{note.note}} ({{note.key}})
+        </div>
+        <div class="innerKey"  :key="note.note" v-if="note.note.includes('S')">
+            <div class="blackkey">
+              {{note.note}} ({{note.key}})
+            </div>
+        </div>
+      </template>
     </div>
   </div>
 </template>
 
 <script>
+import notes from './notes';
+
 export default {
   name: 'app',
   created() {
@@ -40,21 +50,15 @@ export default {
       }
     },
     play(note) {
-      const frequency = this.frequencies[this.notes.indexOf(note)];
-      this.characteristic.writeValue(Uint8Array.from(frequency.toString(), x => x.charCodeAt(0)));
+      this.characteristic.writeValue(
+        Uint8Array.from(note.frequency.toString(), x => x.charCodeAt(0))
+      );
     },
   },
   data() {
     return {
       characteristic: false,
-      keyCodes:
-        [65, 87, 83, 69, 68, 70, 84, 71, 90, 72, 85, 74, 75, 79, 76, 80, 186, 222],
-      keys:
-        ['a', 'w', 's', 'e', 'd', 'f', 't', 'g', 'z', 'h', 'u', 'j', 'k', 'o', 'l', 'p', 'ö', 'ä'],
-      notes:
-        ['C4', 'CS4', 'D4', 'DS4', 'E4', 'F4', 'FS4', 'G4', 'GS4', 'A4', 'AS4', 'B4', 'C5', 'CS5', 'D5', 'DS5', 'E5', 'F5'],
-      frequencies:
-        [262, 277, 294, 311, 330, 349, 370, 392, 415, 440, 466, 494, 523, 554, 587, 622, 659, 698],
+      notes,
     };
   },
 };
