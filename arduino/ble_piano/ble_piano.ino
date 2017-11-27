@@ -6,52 +6,37 @@
 *               and plays them on the arduino with a speaker
 *********************************************************************
 *
-* To be continiued...
+* Usage: 
+*   Step 1: Start the ble_piano application on the Arduino
+*   Step 2: Go to our frontend (gobeli.github.io/blue-pi)
+*   Step 3: Connect to 'Blue-pi'
+*   Step 4: Start playing
+*   
+* To record a meoldie:
+*   Step 1: Press the record button on the Arduino (Record LED on).
+*   Step 6: Play your melodie
+*   Step 7: Press play button on the Arduino for replaying your recorded melody or
+*   Step 8: Press the record button again to stop the recording (Record LED off)
+*   Step 9: Reply your melodiy until you're ready for recording again.
 * 
 *********************************************************************/
 
 #include <Arduino.h>
-#include <SPI.h>
-#if not defined (_VARIANT_ARDUINO_DUE_X_) && not defined (_VARIANT_ARDUINO_ZERO_)
-  #include <SoftwareSerial.h>
-#endif
 
-#include "Adafruit_BLE.h"
+// Bluetooth includes
 #include "Adafruit_BluefruitLE_SPI.h"
-#include "Adafruit_BluefruitLE_UART.h"
-
 #include "BluefruitConfig.h"
 
 /*=========================================================================
-    APPLICATION SETTINGS
+    BLUETOOTH APPLICATION SETTINGS
 
     FACTORYRESET_ENABLE     Perform a factory reset when running this sketch
-   
-                            Enabling this will put your Bluefruit LE module
-                            in a 'known good' state and clear any config
-                            data set in previous sketches or projects, so
-                            running this at least once is a good idea.
-   
-                            When deploying your project, however, you will
-                            want to disable factory reset by setting this
-                            value to 0.  If you are making changes to your
-                            Bluefruit LE device via AT commands, and those
-                            changes aren't persisting across resets, this
-                            is the reason why.  Factory reset will erase
-                            the non-volatile memory where config data is
-                            stored, setting it back to factory default
-                            values.
-       
-                            Some sketches that require you to bond to a
-                            central device (HID mouse, keyboard, etc.)
-                            won't work at all with this feature enabled
-                            since the factory reset will clear all of the
-                            bonding data stored on the chip, meaning the
-                            central device won't be able to reconnect.
+                            SET TO 1 FOR TESTING
+                            SET TO 0 FOR PRODUCTION
                             
     MINIMUM_FIRMWARE_VERSION  Minimum firmware version to have some new features    
     -----------------------------------------------------------------------*/
-    #define FACTORYRESET_ENABLE        1
+    #define FACTORYRESET_ENABLE        0
     #define MINIMUM_FIRMWARE_VERSION   "0.7.0"
 /*=========================================================================*/
 
@@ -59,32 +44,41 @@
 /* Hardware SPI, using SCK/MOSI/MISO hardware SPI pins and then user selected CS/IRQ/RST */
 Adafruit_BluefruitLE_SPI ble(BLUEFRUIT_SPI_CS, BLUEFRUIT_SPI_IRQ, BLUEFRUIT_SPI_RST);
 
-/* defining output pin for buzzer */
+/* defining used pins */
 const int buzzerPin = 9;
 const int recordButtonPin = 3;
 const int playButtonPin = 10;
 const int ledPin = 2;
 
 /* How long a tone should sound */
-int tone_duration = 200;
+const int tone_duration = 200;
 
-/* recive frequenci in this var */
+/* recive frequency in this var */
 int32_t charid_string;
 
+/* tone array for recorded tones */
 int tones[100];
 
+/* boolean if recording */
 boolean isRecording = false;
 
+/**************************************************************************
+    Plays the recorded tones
+**************************************************************************/
 void play() {
   int i = 0;
+  // loop trough available tones
   while (tones[i] != 0) {
-    tone(buzzerPin, tones[i], tone_duration);
+    tone(buzzerPin, tones[i], tone_duration); // play tone
     i = i + 1;
-    delay(tone_duration);
+    delay(tone_duration-25); // delay less than a tone duration for allowing long tones
   }
 }
 
 
+/**************************************************************************
+    Push a tone to the tones array
+**************************************************************************/
 void pushTone(int t) {
   int i;
   for (i = 0; i < 100; i = i + 1) {
@@ -101,25 +95,43 @@ void error(const __FlashStringHelper*err) {
   while (1);
 }
 
+/**************************************************************************
+    BLE Connected
+**************************************************************************/
 void connected(void) {
+  pushTone(262);
+  pushTone(523);
+  play();
+  memset(tones, 0, sizeof(tones));
   Serial.println( F("Connected") );
 }
 
+/**************************************************************************
+    BLE Disconnected
+**************************************************************************/
 void disconnected(void) {
+  pushTone(523);
+  pushTone(262);
+  play();
+  memset(tones, 0, sizeof(tones));
   Serial.println( F("Disconnected") );
 }
 
 
-void BleGattRX(int32_t chars_id, uint8_t data[], uint16_t len) {
+/**************************************************************************
+    Push a tone to the tones array
+**************************************************************************/
+void receiveTone(int32_t chars_id, uint8_t data[], uint16_t len) {
 
   Serial.print("Playing Tone: ");
   Serial.println(atoi((char*)data));
 
+  // checks if we are in recording modus and saves tone if we are
   if(isRecording == true) {
     pushTone(atoi((char*)data));
   }
 
-  tone(buzzerPin, atoi((char*)data), tone_duration);
+  tone(buzzerPin, atoi((char*)data), tone_duration); // play tone
   
 }
 
@@ -131,9 +143,8 @@ void BleGattRX(int32_t chars_id, uint8_t data[], uint16_t len) {
 /**************************************************************************/
 void setup(void)
 {
-  while (!Serial);  // required for Flora & Micro
-  delay(500);
 
+  delay(500);
   Serial.begin(115200);
   Serial.println(F("           BLE Piano"));
   Serial.println(F("-------------------------------------"));
@@ -165,7 +176,7 @@ void setup(void)
   Serial.println( F("Adding Service 0x1234 with characterisitc 0x2345") );
   ble.sendCommandCheckOK( F("AT+GATTADDSERVICE=uuid=0x1234") );
   ble.sendCommandCheckOK( F("AT+GAPDEVNAME=Blue-Pi") );
-  ble.sendCommandWithIntReply( F("AT+GATTADDCHAR=UUID=0x2345,PROPERTIES=0x08,MIN_LEN=1,MAX_LEN=6,DATATYPE=string,DESCRIPTION=string,VALUE=abc"), &charid_string);
+  ble.sendCommandWithIntReply( F("AT+GATTADDCHAR=UUID=0x2345,PROPERTIES=0x08,MIN_LEN=1,MAX_LEN=6,DATATYPE=string,DESCRIPTION=string,VALUE=blue-pi"), &charid_string);
 
   ble.reset();
 
@@ -182,15 +193,15 @@ void setup(void)
   
   /* Only one BLE GATT function should be set, it is possible to set it 
   multiple times for multiple Chars ID  */
-  ble.setBleGattRxCallback(charid_string, BleGattRX);
+  ble.setBleGattRxCallback(charid_string, receiveTone);
 
-  /* set buzzer pin */
+  /* set pins */
   pinMode(buzzerPin, OUTPUT);
-
   pinMode(recordButtonPin, INPUT);
   pinMode(playButtonPin, INPUT);
   pinMode(ledPin, OUTPUT);
 
+  // reset tones array
   memset(tones, 0, sizeof(tones));
 }
 
@@ -203,18 +214,21 @@ void setup(void)
 void loop(void)
 {  
 
+  // if Record Button Pressed
   if(digitalRead(recordButtonPin) == LOW) {
-    isRecording = !isRecording;
+    isRecording = !isRecording; // change record state
 
+    // if recording reset tones and activate record led
     if(isRecording == 1) {
       memset(tones, 0, sizeof(tones));
       digitalWrite(ledPin, HIGH);
     } else {
-      digitalWrite(ledPin, LOW);
+      digitalWrite(ledPin, LOW); // deactivate record led
     }
 
     delay(500);
-  
+
+  // if play button is pressed
   } else if(digitalRead(playButtonPin) == LOW) {
     play();
     
