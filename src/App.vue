@@ -7,10 +7,10 @@
 
     <div id="regularKeyboard" v-if="characteristic">
       <template v-for="(note, index) in notes">
-        <div class="key" :key="note.note" v-if="!note.note.includes('S')">
+        <div class="key" :class="{active: note === activeNote}" :key="note.note" @click="play(note)" v-if="!note.note.includes('S')">
           {{note.note}} ({{note.key}})
         </div>
-        <div class="innerKey"  :key="note.note" v-if="note.note.includes('S')">
+        <div class="innerKey" :class="{active: note === activeNote}" :key="note.note" @click="play(note)"  v-if="note.note.includes('S')">
             <div class="blackkey">
               {{note.note}} ({{note.key}})
             </div>
@@ -44,21 +44,26 @@ export default {
         .catch(error => console.error(error));
     },
     playKey(event) {
-      const index = this.keyCodes.indexOf(event.keyCode);
-      if (index > -1) {
-        this.play(this.notes[index]);
+      const note = this.notes.find(n => n.keyCode === event.keyCode);
+      if (note) {
+        this.play(note);
       }
     },
     play(note) {
+      this.activeNote = note;
       this.characteristic.writeValue(
         Uint8Array.from(note.frequency.toString(), x => x.charCodeAt(0))
       );
+      setTimeout(() => {
+        this.activeNote = null;
+      }, 100);
     },
   },
   data() {
     return {
       characteristic: false,
       notes,
+      activeNote: null,
     };
   },
 };
