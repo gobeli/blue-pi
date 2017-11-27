@@ -2,8 +2,8 @@
 *  Script     : ble_piano
 *  Author     : Etienne Gobeli & Robin Christen
 *  Date       : 11/12/2017
-*  Description: Recives frequencies over bluetooth 
-*               and plays them on the arduino with the buzzer
+*  Description: Can recive and record frequencies over bluetooth 
+*               and plays them on the arduino with a speaker
 *********************************************************************
 *
 * To be continiued...
@@ -61,12 +61,39 @@ Adafruit_BluefruitLE_SPI ble(BLUEFRUIT_SPI_CS, BLUEFRUIT_SPI_IRQ, BLUEFRUIT_SPI_
 
 /* defining output pin for buzzer */
 const int buzzerPin = 9;
+const int recordButtonPin = 3;
+const int playButtonPin = 10;
+const int ledPin = 2;
 
 /* How long a tone should sound */
-int tone_duration = 250;
+int tone_duration = 200;
 
 /* recive frequenci in this var */
 int32_t charid_string;
+
+int tones[100];
+
+boolean isRecording = false;
+
+void play() {
+  int i = 0;
+  while (tones[i] != 0) {
+    tone(buzzerPin, tones[i], tone_duration);
+    i = i + 1;
+    delay(tone_duration);
+  }
+}
+
+
+void pushTone(int t) {
+  int i;
+  for (i = 0; i < 100; i = i + 1) {
+    if(tones[i] == 0) {
+      tones[i] = t;
+      break;
+    }
+  }
+}
 
 // A small helper
 void error(const __FlashStringHelper*err) {
@@ -87,6 +114,10 @@ void BleGattRX(int32_t chars_id, uint8_t data[], uint16_t len) {
 
   Serial.print("Playing Tone: ");
   Serial.println(atoi((char*)data));
+
+  if(isRecording == true) {
+    pushTone(atoi((char*)data));
+  }
 
   tone(buzzerPin, atoi((char*)data), tone_duration);
   
@@ -155,6 +186,12 @@ void setup(void)
 
   /* set buzzer pin */
   pinMode(buzzerPin, OUTPUT);
+
+  pinMode(recordButtonPin, INPUT);
+  pinMode(playButtonPin, INPUT);
+  pinMode(ledPin, OUTPUT);
+
+  memset(tones, 0, sizeof(tones));
 }
 
 
@@ -165,6 +202,26 @@ void setup(void)
 /**************************************************************************/
 void loop(void)
 {  
-  ble.update(200);
+
+  if(digitalRead(recordButtonPin) == LOW) {
+    isRecording = !isRecording;
+
+    if(isRecording == 1) {
+      memset(tones, 0, sizeof(tones));
+      digitalWrite(ledPin, HIGH);
+    } else {
+      digitalWrite(ledPin, LOW);
+    }
+
+    delay(500);
+  
+  } else if(digitalRead(playButtonPin) == LOW) {
+    play();
+    
+    delay(500);
+  } else {
+    ble.update(200);
+  }
+
 }
 
