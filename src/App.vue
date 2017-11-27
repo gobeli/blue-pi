@@ -7,10 +7,18 @@
 
     <div id="regularKeyboard" v-if="characteristic">
       <template v-for="(note, index) in notes">
-        <div class="key" :class="{active: note === activeNote}" :key="note.note" @click="play(note)" v-if="!note.note.includes('S')">
+        <div class="key"
+          :class="{active: note === activeNote}" :key="note.note"
+          v-on:touchstart="play(note)" v-on:mousedown="play(note)"
+          v-if="!note.note.includes('S')"
+        >
           {{note.note}} ({{note.key}})
         </div>
-        <div class="innerKey" :class="{active: note === activeNote}" :key="note.note" @click="play(note)"  v-if="note.note.includes('S')">
+        <div class="innerKey"
+          :class="{active: note === activeNote}" :key="note.note"
+          v-on:touchstart="play(note)" v-on:mousedown="play(note)"
+          v-if="note.note.includes('S')"
+        >
             <div class="blackkey">
               {{note.note}} ({{note.key}})
             </div>
@@ -26,7 +34,10 @@ import notes from './notes';
 export default {
   name: 'app',
   created() {
-    window.addEventListener('keydown', this.playKey.bind(this));
+    window.addEventListener('keydown', this.playKey.bind(this), false);
+    window.addEventListener('keyup', this.stopKey.bind(this), false);
+    window.addEventListener('mouseup', this.stopKey.bind(this), false);
+    window.addEventListener('touchend', this.stopKey.bind(this), false);
   },
   methods: {
     connect() {
@@ -43,6 +54,11 @@ export default {
         })
         .catch(error => console.error(error));
     },
+    stopKey() {
+      this.down = false;
+      clearInterval(this.interval);
+      this.activeNote = null;
+    },
     playKey(event) {
       const note = this.notes.find(n => n.keyCode === event.keyCode);
       if (note) {
@@ -50,13 +66,16 @@ export default {
       }
     },
     play(note) {
+      if (this.down) return;
+      this.down = true;
       this.activeNote = note;
-      this.characteristic.writeValue(
-        Uint8Array.from(note.frequency.toString(), x => x.charCodeAt(0))
-      );
-      setTimeout(() => {
-        this.activeNote = null;
-      }, 100);
+      const write = () => {
+        this.characteristic.writeValue(
+          Uint8Array.from(note.frequency.toString(), x => x.charCodeAt(0))
+        );
+      };
+      write();
+      this.interval = setInterval(write, 300);
     },
   },
   data() {
@@ -64,6 +83,8 @@ export default {
       characteristic: false,
       notes,
       activeNote: null,
+      down: false,
+      interval: null
     };
   },
 };
