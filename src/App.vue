@@ -75,7 +75,7 @@ export default {
         );
       };
       write();
-      this.interval = setInterval(write, 300);
+      this.interval = setInterval(write, 200);
     },
   },
   data() {
